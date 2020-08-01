@@ -5,7 +5,7 @@ WORKDIR /opt
 COPY ./nodejs/server.js /opt/server.js
 COPY ./nodejs/entrypoint.sh /opt/entrypoint.sh
 
-EXPOSE 80
+EXPOSE 3000
 
 ENTRYPOINT ["/opt/entrypoint.sh"]
 
