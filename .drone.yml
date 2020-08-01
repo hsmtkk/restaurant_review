@@ -6,7 +6,7 @@ steps:
   - name: lint_nodejs_dockerfile
     image: hadolint/hadolint:v1.18.0
     commands:
-      - hadolint build/Dockerfile_nodejs
+      - hadolint build/nodejs_Dockerfile
 
   - name: build_nodejs_docker
     image: plugins/docker
