@@ -1,9 +1,12 @@
 FROM node:14.7.0
 
-COPY ./nodejs/server.js /server.js
+WORKDIR /opt
+
+COPY ./nodejs/server.js /opt/server.js
+COPY ./nodejs/entrypoint.sh /opt/entrypoint.sh
 
 EXPOSE 80
 
-ENTRYPOINT ["node", "/server.js"]
+ENTRYPOINT ["/opt/entrypoint.sh"]
 
 
