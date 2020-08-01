@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const request = require('request');
 const fs = require('fs');
 
-const API_KEY='XXXXXXXXXXXXX';
+const API_KEY=process.env.GOOGLE_API_KEY;
 const SEARCH_URL='https://maps.googleapis.com/maps/api/place/textsearch/json';
 const PLACE_URL='https://maps.googleapis.com/maps/api/place/details/json';
 const SENTIMENT_URL='https://language.googleapis.com/v1/documents:analyzeSentiment';

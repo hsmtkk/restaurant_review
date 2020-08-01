@@ -1,0 +1,21 @@
+kind: pipeline
+name: default
+type: docker
+
+steps:
+  - name: lint_nodejs_dockerfile
+    image: hadolint/hadolint:v1.18.0
+    commands:
+      - hadolint build/Dockerfile_nodejs
+
+  - name: build_nodejs_docker
+    image: plugins/docker
+    settings:
+      dockerfile: build/nodejs_Dockerfile
+      username: hsmtkk
+      password:
+        from_secret: docker_hub_token
+      repo: hsmtkk/restaurant_review
+      tags:
+        - nodejs
+
