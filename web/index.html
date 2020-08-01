@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>レストラン　口コミ　感情分析</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+
+    <script>
+
+      function searchShops (text) {
+        return fetch(`/shops?text=${text}`)
+          .then((res) => {
+            if (! res.ok) {
+              throw res.statusText;
+            }
+            return res.json().then((json) => {
+              return json.results;
+            });
+          });
+      }
+
+      function getShopDetail (place_id) {
+        const item = document.querySelector(`#place_${place_id}`);
+
+        return fetch(`/shop?place_id=${place_id}`)
+          .then((res) => {
+            if (! res.ok) {
+              throw res.statusText;
+            }
+            return res.json().then((json) => {
+              return json.result;
+            });
+          });
+      }
+
+      function postSentiment (text) {
+        return fetch("/sentiment", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=utf-8"
+          },
+          body: JSON.stringify({
+            text: text
+          })
+        }).then((res) => {
+          if (! res.ok) {
+            throw res.statusText;
+          }
+          return res.json();
+        });
+      }
+
+      function clearResultDOM () {
+        const resultShopNameDOM = getResultShopNameDOM();
+        const resultShopAddressDOM = getResultShopAddressDOM();
+        const resultShopMapDOM = getResultShopMapDOM();
+        const resultShopReviewsDOM = getResultShopReviewsDOM();
+        const resultReviewsSentimentDOM = getResultSentimentDOM();
+        clearDOM(resultShopNameDOM);
+        clearDOM(resultShopAddressDOM);
+        clearDOM(resultShopMapDOM);
+        clearDOM(resultShopReviewsDOM);
+        clearDOM(resultReviewsSentimentDOM);
+      }
+
+      function getResultShopsDOM () {
+        return document.querySelector("#result_shops");
+      }
+
+      function getResultShopNameDOM () {
+        return document.querySelector("#result_shop_name");
+      }
+
+      function getResultShopAddressDOM () {
+        return document.querySelector("#result_shop_address");
+      }
+
+      function getResultShopMapDOM () {
+        return document.querySelector("#result_shop_map");
+      }
+
+      function getResultShopReviewsDOM () {
+        return document.querySelector("#result_shop_reviews");
+      }
+
+      function getResultSentimentDOM () {
+        return document.querySelector("#result_reviews_sentiment");
+      }
+
+      function clearDOM (dom) {
+        while (dom.firstChild) {
+          dom.removeChild(dom.firstChild);
+        }
+      }
+
+      function createShopsDOM (shops) {
+        const shopsDOM = document.createElement("ul");
+        shops.forEach((shop) => {
+          const shopDOM = createShopDOM(shop);
+          shopsDOM.appendChild(shopDOM);
+        });
+        return shopsDOM;
+      }
+
+      function createShopDOM (shop) {
+        const shopDOM = document.createElement("li");
+
+        const name = document.createTextNode(shop.name);
+        const link = document.createElement("a");
+        link.onclick = () => {
+          clearResultDOM();
+
+        const shopNameDOM = createShopNameDOM(shop);
+        const resultShopNameDOM = getResultShopNameDOM();
+        resultShopNameDOM.appendChild(shopNameDOM);
+
+        const shopAddressNode = document.createTextNode(shop.address);
+        const resultShopAddressDOM = getResultShopAddressDOM();
+        resultShopAddressDOM.appendChild(shopAddressNode);
+
+        const shopMapDOM = createShopMapDOM(shop);
+        const resultShopMapDOM = getResultShopMapDOM();
+        resultShopMapDOM.appendChild(shopMapDOM);
+
+        const resultShopReviewsDOM = getResultShopReviewsDOM();
+        const resultReviewsSentimentDOM = getResultSentimentDOM();
+        getShopDetail(shop.place_id).then((json) => {
+          const reviews = json.reviews.filter((review) => {
+            return !!review.text;
+          });
+
+          const shopReviewsDOM = createShopReviewsDOM(shop, reviews);
+          resultShopReviewsDOM.appendChild(shopReviewsDOM);
+
+          if (reviews.length > 0) {
+            const text = reviews.map((review) => {
+              return review.text;
+            }).join("¥n");
+            postSentiment(text).then((json) => {
+              const reviewsSentimentDOM = createReviewsSentimentDOM(json);
+              resultReviewsSentimentDOM.appendChild(reviewsSentimentDOM);
+            });
+          } else {
+            alert("レビューがありません");
+          }
+        });
+      };
+      link.appendChild(name);
+
+      const rating = document.createTextNode(" " + shop.rating);
+
+      shopDOM.appendChild(link);
+      shopDOM.appendChild(rating);
+
+      const br = document.createElement("br");
+      const address = document.createTextNode(shop.address);
+
+      shopDOM.appendChild(br);
+      shopDOM.appendChild(address);
+
+      return shopDOM;
+    }
+
+    function createShopNameDOM (shop) {
+      const shopDetailNameDOM = document.createElement("div");
+      const title = document.createElement("h2");
+      const link = document.createElement("a");
+      const name = document.createTextNode(shop.name);
+      link.appendChild(name);
+      link.href = `https://maps.google.co.jp/maps/place?q=place_id:${shop.place_id}`;
+      link.target = "_blank";
+      title.appendChild(link);
+      shopDetailNameDOM.appendChild(title);
+      return shopDetailNameDOM;
+    }
+
+    function createShopMapDOM (shop) {
+      const iframeMap = document.createElement("iframe");
+      iframeMap.src = `https://maps.google.co.jp/maps?q=loc:${shop.location}&output=embed`;
+
+      iframeMap.style.width = "100%";
+      iframeMap.style.height = "300px";
+      return iframeMap;
+    }
+
+    function createShopReviewsDOM (shop, reviews) {
+      const reviewsDOM = document.createElement("ul");
+      reviews.map((review) => {
+        const reviewDOM = document.createElement("li");
+        const reviewTextDOM = document.createTextNode(review.text);
+        reviewDOM.appendChild(reviewTextDOM);
+        return reviewDOM;
+      }).forEach((reviewDOM) => {
+        reviewsDOM.appendChild(reviewDOM);
+      });
+      return reviewsDOM;
+    }
+
+    function createReviewsSentimentDOM (json) {
+      const reviewsSentimentDOM = document.createElement("div");
+      const score = (json.score + 1.0) * 50;
+      const scoreNode = document.createTextNode(
+        `スコア：${score}`
+      );
+      const br = document.createElement("br");
+      const magnitudeNode = document.createTextNode(
+        `関心度：${json.magnitude}`
+      );
+      reviewsSentimentDOM.appendChild(scoreNode);
+      reviewsSentimentDOM.appendChild(br);
+      reviewsSentimentDOM.appendChild(magnitudeNode);
+      reviewsSentimentDOM.style.fontSize = "large";
+      return reviewsSentimentDOM;
+    }
+
+    window.onload = () => {
+      document.querySelector("#btn_search").onclick = () => {
+        const text = document.querySelector("#search_text").value;
+        searchShops(text).then((json) => {
+          clearResultDOM();
+          const shops = json.map((shop) => {
+            return {
+              name: shop.name,
+              place_id: shop.place_id,
+              rating: shop.rating,
+              location: `${shop.geometry.location.lat},`
+                + `${shop.geometry.location.lng}`,
+              address: shop.formatted_address
+            };
+          });
+          const resultShopsDOM = getResultShopsDOM();
+          clearDOM(resultShopsDOM);
+          const shopsDOM = createShopsDOM(shops);
+          resultShopsDOM.appendChild(shopsDOM);
+          });
+        }
+      };
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <h2>レストラン口コミ　感情分析</h2>
+      </div>
+      <div class="row">
+        <div class="col-xs-12 col-lg-4">
+          <div>
+            <input id="search_text" value="">
+          </div>
+          <button id="btn_search">送信</button>
+          <div id="result_shops"></div>
+        </div>
+        <div class="col-xs-12 col-lg-8">
+          <div class="row">
+            <div class="col-xs-12 col-lg-12">
+              <h2 id="result_shop_name"></h2>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12 col-lg-6">
+              <div class="row">
+                <div class="col-xs-12 col-lg-12">
+                  <div id="result_shop_address"></div>
+                </div>
+                <div class="col-xs-12 col-lg-12">
+                  <div id="result_reviews_sentiment"></div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-12 col-lg-12" id="result_shop_map">
+                </div>
+              </div>
+            </div>
+            <div class="col-xs-12 col-lg-6" id="result_shop_reviews">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
