@@ -1,5 +1,6 @@
 #!/bin/sh
-docker run --env GOOGLE_API_KEY=AIzaSyCm0xvWbynLIUd_CFn-mNH7NgJrAkrfrvM \
+echo "please set GOOGLE_API_KEY environment variable"
+docker run \
  --publish 8000:80 \
  --rm \
  hsmtkk/restaurant_review:nodejs
