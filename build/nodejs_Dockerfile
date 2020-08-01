@@ -2,11 +2,14 @@ FROM node:14.7.0
 
 WORKDIR /opt
 
+RUN mkdir /opt/data
+RUN mkdir /opt/public
+
 COPY ./nodejs/server.js /opt/server.js
+COPY ./nodejs/index.html /opt/public/index.html
 COPY ./nodejs/entrypoint.sh /opt/entrypoint.sh
 
 EXPOSE 3000
 
 ENTRYPOINT ["/opt/entrypoint.sh"]
-
 
